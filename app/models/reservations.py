@@ -4,10 +4,9 @@ from datetime import datetime, timezone
 import enum
 
 class ReservationStatus(enum.Enum):
-  ACTIVE = "active"
-  INACTIVE = "inactive"
-  NOT_VERIFIED = "not_verified"
-  BANNED = "banned"
+  pending = "pending"
+  confirmed = "confirmed"
+  cancelled = "cancelled"
 
 class Reservation:
   __tablename__ = "reservations"
