@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey, PrimaryKeyConstraint
 from sqlalchemy.orm import relationship
 
 class DishAllergen():
@@ -6,6 +6,10 @@ class DishAllergen():
 
     dish_id     = Column(Integer, ForeignKey("dishes.dish_id"), primary_key=True, index=True)
     allergen_id = Column(Integer, ForeignKey("allergens.allergen_id"), primary_key=True, index=True)
+
+    __table_args__ = {
+        PrimaryKeyConstraint('dish_id', 'allergen_id')
+    }
 
 
 #relaciones
