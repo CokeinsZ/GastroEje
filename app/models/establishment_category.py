@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
+from app.database import Base
 
-class EstablishmentCategory:
+class EstablishmentCategory(Base):
   __tablename__ = "establishment_category"
 
   establishment_id = Column(Integer, ForeignKey("establishments.establishment_id"), primary_key=True)

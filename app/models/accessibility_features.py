@@ -1,8 +1,8 @@
 from sqlalchemy import *
 from sqlalchemy.orm import *
+from app.database import Base
 
-
-class AccessibilityFeature:
+class AccessibilityFeature(Base):
     __tablename__ = "accessibility_features"
 
     id = Column(Integer, primary_key=True, index=True)

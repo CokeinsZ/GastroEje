@@ -2,7 +2,7 @@ from sqlalchemy import *
 from sqlalchemy.orm import *
 from datetime import datetime, timezone
 import enum
-
+from app.database import Base
 
 class RatingEnum(enum.Enum):
     ONE = "1"
@@ -12,7 +12,7 @@ class RatingEnum(enum.Enum):
     FIVE = "5"
 
 
-class Review:
+class Review(Base):
     __tablename__ = "reviews"
 
     # Claves primarias compuestas (user_id + establishment_id)

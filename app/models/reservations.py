@@ -2,13 +2,14 @@ from sqlalchemy import *
 from sqlalchemy.orm import *
 from datetime import datetime, timezone
 import enum
+from app.database import Base
 
 class ReservationStatus(enum.Enum):
   pending = "pending"
   confirmed = "confirmed"
   cancelled = "cancelled"
 
-class Reservation:
+class Reservation(Base):
   __tablename__ = "reservations"
 
   reservation_id = Column(Integer, primary_key=True, index=True)

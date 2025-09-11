@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, ForeignKey, PrimaryKeyConstraint
 from sqlalchemy.orm import relationship
+from app.database import Base
 
-class DishAllergen():
+class DishAllergen(Base):
     __tablename__ = "dish_allergen"
 
     dish_id     = Column(Integer, ForeignKey("dishes.dish_id"), primary_key=True, index=True)

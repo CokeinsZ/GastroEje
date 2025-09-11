@@ -1,7 +1,8 @@
 from sqlalchemy import *
 from sqlalchemy.orm import *
+from app.database import Base
 
-class Establishment:
+class Establishment(Base):
   __tablename__ = "establishments"
 
   establishment_id = Column(Integer, primary_key=True, index=True)

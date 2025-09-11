@@ -2,6 +2,7 @@ from sqlalchemy import *
 from sqlalchemy.orm import *
 from datetime import datetime, timezone
 import enum
+from app.database import Base
 
 class UserRole(enum.Enum):
   admin = "admin"
@@ -13,7 +14,7 @@ class UserStatus(enum.Enum):
   NOT_VERIFIED = "not_verified"
   BANNED = "banned"
 
-class User:
+class User(Base):
   __tablename__ = "users"
 
   user_id = Column(Integer, primary_key=True, index=True)

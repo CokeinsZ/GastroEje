@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Text
 from sqlalchemy.orm import relationship
-#from app.database import Base
+from app.database import Base
 
-class Dish():
+class Dish(Base):
     __tablename__ = 'dishes'
 
     dish_id = Column(Integer, primary_key=True, index=True)
