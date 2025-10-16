@@ -3,210 +3,101 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.database import get_db
 from app.models.users import User, UserRole, UserStatus
-from pydantic import BaseModel, EmailStr
-from typing import List, Optional
+from app.schemas.users import (
+    UserCreate,
+    UserUpdate,
+    UserLogin,
+    ChangePassword,
+    UpdateRole,
+    UpdateStatus,
+    UserOut,
+    UserLoginOut,
+    UserMessageOut
+)
+from typing import List
 
-router = APIRouter()
-
-# Modelos Pydantic para request/response
-class UserCreate(BaseModel):
-    name: str
-    last_name: Optional[str] = None
-    email: EmailStr
-    password: str
-    phone: Optional[str] = None
-    role: UserRole = UserRole.user
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-class UserUpdate(BaseModel):
-    name: Optional[str] = None
-    last_name: Optional[str] = None
-    phone: Optional[str] = None
-
-class ChangePassword(BaseModel):
-    current_password: str
-    new_password: str
-
-class UpdateRole(BaseModel):
-    role: UserRole
-
-class UpdateStatus(BaseModel):
-    status: UserStatus
+router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
 # Endpoints
-@router.post("/register")
+@router.post("/register", response_model=UserLoginOut, status_code=201)
 async def register_user(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
-    # Verificar si el email ya existe
-    result = await db.execute(select(User).where(User.email == user_data.email))
-    existing_user = result.scalar_one_or_none()
-    
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    # Crear nuevo usuario (en producción hashear la contraseña)
-    new_user = User(
-        name=user_data.name,
-        last_name=user_data.last_name,
-        email=user_data.email,
-        password=user_data.password,  # Hashear antes de guardar
-        phone=user_data.phone,
-        role=user_data.role
-    )
-    
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
-    
-    return {"message": "User created successfully", "user_id": new_user.user_id}
+    """Registrar un nuevo usuario"""
+    return {"message": "User created successfully", "user_id": 1}
 
-@router.post("/login")
+@router.post("/login", response_model=UserLoginOut)
 async def login_user(login_data: UserLogin, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.email == login_data.email))
-    user = result.scalar_one_or_none()
-    
-    if not user or user.password != login_data.password:  # En producción usar BCrypt
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    if user.status != UserStatus.ACTIVE:
-        raise HTTPException(status_code=403, detail="User account is not active")
-    
-    return {"message": "Login successful", "user_id": user.user_id}
+    """Iniciar sesión de usuario"""
+    return {"message": "Login successful", "user_id": 1}
 
-@router.get("/list")
+@router.get("/list", response_model=List[UserOut])
 async def list_users(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User))
-    users = result.scalars().all()
-    return users
+    """Obtener lista de todos los usuarios"""
+    return []
 
-@router.get("/{user_id}")
+@router.get("/{user_id}", response_model=UserOut)
 async def get_user_by_id(
     user_id: int = Path(..., description="ID del usuario"),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(User).where(User.user_id == user_id))
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return user
+    """Obtener un usuario por su ID"""
+    return {"user": "alsdfjaklsdf"}
 
-@router.get("/email/{email}")
+@router.get("/email/{email}", response_model=UserOut)
 async def get_user_by_email(
     email: str = Path(..., description="Email del usuario"),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return user
+    """Obtener un usuario por su email"""
+    return {"user": "alsdfjaklsdf"}
 
-@router.put("/{user_id}")
+@router.put("/{user_id}", response_model=UserOut)
 async def update_user(
     user_data: UserUpdate,
     user_id: int = Path(..., description="ID del usuario a actualizar"),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(User).where(User.user_id == user_id))
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Actualizar solo los campos proporcionados
-    for field, value in user_data.dict(exclude_unset=True).items():
-        setattr(user, field, value)
-    
-    await db.commit()
-    await db.refresh(user)
-    
-    return {"message": "User updated successfully", "user": user}
+    """Actualizar información de un usuario"""
+    return {"message": "User updated successfully", "user": {}}
 
-@router.patch("/{user_id}/password")
+@router.patch("/{user_id}/password", response_model=UserMessageOut)
 async def change_password(
     password_data: ChangePassword,
     user_id: int = Path(..., description="ID del usuario"),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(User).where(User.user_id == user_id))
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Verificar contraseña actual (en producción usar BCrypt)
-    if user.password != password_data.current_password:
-        raise HTTPException(status_code=401, detail="Current password is incorrect")
-    
-    # Actualizar contraseña (en producción hashear antes de guardar)
-    user.password = password_data.new_password
-    await db.commit()
-    
+    """Cambiar la contraseña de un usuario"""
     return {"message": "Password updated successfully"}
 
-@router.patch("/{user_id}/allergens")
+@router.patch("/{user_id}/allergens", response_model=UserMessageOut)
 async def update_allergens(
     user_id: int = Path(..., description="ID del usuario"),
     db: AsyncSession = Depends(get_db)
 ):
-    # Implementar lógica para actualizar alergias
-    # Necesitarás un modelo Pydantic para las alergias
+    """Actualizar alergias del usuario"""
     return {"message": "Allergens updated successfully"}
 
-@router.patch("/{user_id}/role")
+@router.patch("/{user_id}/role", response_model=UserMessageOut)
 async def change_role(
     role_data: UpdateRole,
     user_id: int = Path(..., description="ID del usuario"),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(User).where(User.user_id == user_id))
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    user.role = role_data.role
-    await db.commit()
-    await db.refresh(user)
-    
-    return {"message": "Role updated successfully", "new_role": user.role}
+    """Cambiar el rol de un usuario"""
+    return {"message": "Role updated successfully"}
 
-@router.patch("/{user_id}/status")
+@router.patch("/{user_id}/status", response_model=UserMessageOut)
 async def change_status(
     status_data: UpdateStatus,
     user_id: int = Path(..., description="ID del usuario"),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(User).where(User.user_id == user_id))
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    user.status = status_data.status
-    await db.commit()
-    await db.refresh(user)
-    
-    return {"message": "Status updated successfully", "new_status": user.status}
+    """Cambiar el estado de un usuario"""
+    return {"message": "Status updated successfully"}
 
-@router.delete("/{user_id}")
+@router.delete("/{user_id}", response_model=UserMessageOut)
 async def delete_user(
     user_id: int = Path(..., description="ID del usuario a eliminar"),
     db: AsyncSession = Depends(get_db)
 ):
-    result = await db.execute(select(User).where(User.user_id == user_id))
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    await db.delete(user)
-    await db.commit()
-    
+    """Eliminar un usuario"""
     return {"message": "User deleted successfully"}

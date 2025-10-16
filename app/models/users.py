@@ -24,7 +24,7 @@ class User(Base):
   email = Column(String(255), unique=True, nullable=False, index=True)
   password = Column(String(255), nullable=False)
   phone = Column(String(13))
-  status = Column(Enum(UserStatus), default=UserStatus.active)
+  status = Column(Enum(UserStatus), default=UserStatus.ACTIVE)
   created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
   updated_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 

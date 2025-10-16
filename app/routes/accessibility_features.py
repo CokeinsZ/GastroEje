@@ -3,30 +3,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.database import get_db
 from app.models.accessibility_features import AccessibilityFeature
-from pydantic import BaseModel
-from typing import Optional
+from app.schemas.accessibility_features import (
+    AccessibilityFeatureCreate,
+    AccessibilityFeatureUpdate,
+    AccessibilityFeatureOut,
+    AccessibilityFeatureMessageOut
+)
+from typing import List
 
-router = APIRouter()
-
-# Modelos Pydantic para request/response
-class AccessibilityFeatureCreate(BaseModel):
-    establishment_id: int
-    name: str
-    description: Optional[str] = None
-
-class AccessibilityFeatureUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
+router = APIRouter(prefix="/accessibilidad", tags=["Accesibilidad"])
 
 # Endpoints
-@router.get("/list")
+@router.get("/list", response_model=List[AccessibilityFeatureOut])
 async def list_accessibility_features(db: AsyncSession = Depends(get_db)):
     """Listar todas las características de accesibilidad"""
     result = await db.execute(select(AccessibilityFeature))
     features = result.scalars().all()
     return features
 
-@router.get("/{feature_id}")
+@router.get("/{feature_id}", response_model=AccessibilityFeatureOut)
 async def get_accessibility_feature(
     feature_id: int = Path(..., description="ID de la característica de accesibilidad"),
     db: AsyncSession = Depends(get_db)
@@ -42,7 +37,7 @@ async def get_accessibility_feature(
     
     return feature
 
-@router.post("/")
+@router.post("/", response_model=AccessibilityFeatureMessageOut, status_code=201)
 async def create_accessibility_feature(
     feature_data: AccessibilityFeatureCreate,
     db: AsyncSession = Depends(get_db)
@@ -80,7 +75,7 @@ async def create_accessibility_feature(
         "feature_id": new_feature.id
     }
 
-@router.put("/{feature_id}")
+@router.put("/{feature_id}", response_model=AccessibilityFeatureOut)
 async def update_accessibility_feature(
     feature_data: AccessibilityFeatureUpdate,
     feature_id: int = Path(..., description="ID de la característica a actualizar"),
@@ -121,12 +116,9 @@ async def update_accessibility_feature(
     await db.commit()
     await db.refresh(feature)
     
-    return {
-        "message": "Accessibility feature updated successfully", 
-        "feature": feature
-    }
+    return feature
 
-@router.delete("/{feature_id}")
+@router.delete("/{feature_id}", response_model=AccessibilityFeatureMessageOut)
 async def delete_accessibility_feature(
     feature_id: int = Path(..., description="ID de la característica a eliminar"),
     db: AsyncSession = Depends(get_db)
