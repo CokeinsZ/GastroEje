@@ -1,53 +1,43 @@
-# app/routers/establecimientos.py
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from app.database import get_session
+from app.controllers.establishment import *
+from app.schemas.establishment import EstablishmentCreate, EstablishmentUpdate
 
-from app.database import get_db
-from app.schemas.establishment import EstablishmentCreate, EstablishmentOut
-from app.schemas.category import MessageOut
+router = APIRouter(prefix="/establishments", tags=["Establishments"])
 
-router = APIRouter(prefix="/establecimientos", tags=["Establecimientos"])
 
-# Listar establecimientos → GET
-@router.get("/list", response_model=List[EstablishmentOut])
-async def list_establecimientos(db: AsyncSession = Depends(get_db)):
-    """Obtener lista de todos los establecimientos"""
-    return []
+# ---------- CREAR ----------
+@router.post("/")
+async def create(data: EstablishmentCreate, db: AsyncSession = Depends(get_session)):
+    return await create_establishment(db, data)
 
-# Eliminar establecimientos → DELETE
-@router.delete("/{establecimiento_id}", response_model=MessageOut)
-async def delete_establecimiento(
-    establecimiento_id: int = Path(..., ge=1, description="ID del establecimiento"),
-    db: AsyncSession = Depends(get_db),
-):
-    """Eliminar un establecimiento"""
-    return {"msg": f"Establecimiento {establecimiento_id} eliminado"}
 
-# Actualizar info → POST (endpoint separado para mantener el verbo POST que pediste)
-@router.post("/{establecimiento_id}/actualizar", response_model=EstablishmentOut)
-async def actualizar_info_establecimiento(
-    establishment: EstablishmentCreate,
-    establecimiento_id: int = Path(..., ge=1, description="ID del establecimiento"),
-    db: AsyncSession = Depends(get_db),
-):
-    """Actualizar información de un establecimiento"""
-    return {"msg": f"Información del establecimiento {establecimiento_id} actualizada"}
 
-# Mostrar info del establecimiento → GET
-@router.get("/{establecimiento_id}", response_model=EstablishmentOut)
-async def get_establecimiento(
-    establecimiento_id: int = Path(..., ge=1, description="ID del establecimiento"),
-    db: AsyncSession = Depends(get_db),
-):
-    """Obtener información de un establecimiento específico"""
-    return {"msg": f"Información del establecimiento {establecimiento_id}"}
 
-# Registrar establecimiento → POST
-@router.post("/", response_model=EstablishmentOut, status_code=201)
-async def registrar_establecimiento(
-    establishment: EstablishmentCreate,
-    db: AsyncSession = Depends(get_db)
-):
-    """Registrar un nuevo establecimiento"""
-    return {"msg": "Establecimiento registrado correctamente"}
+
+# ---------- LEER ----------
+@router.get("/")
+async def list_all(db: AsyncSession = Depends(get_session)):
+    return await get_establishments(db)
+
+
+
+
+
+# ---------- LEER ----------
+@router.get("/{establishment_id}")
+async def get_one(establishment_id: int, db: AsyncSession = Depends(get_session)):
+    return await get_establishment_by_id(db, establishment_id)
+
+
+# ---------- ACTUALIZAR ----------
+@router.patch("/{establishment_id}")
+async def update(establishment_id: int, data: EstablishmentUpdate, db: AsyncSession = Depends(get_session)):
+    return await update_establishment(db, establishment_id, data)
+
+
+# ---------- ELIMINAR ----------
+@router.delete("/{establishment_id}")
+async def delete(establishment_id: int, db: AsyncSession = Depends(get_session)):
+    return await delete_establishment(db, establishment_id)
