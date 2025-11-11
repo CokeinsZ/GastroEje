@@ -4,17 +4,18 @@ from typing import List
 from app.database import get_db
 from app.schemas.menus import MenuCreate, MenuUpdate, MenuOut, MenuMessageOut
 from app.schemas.dishes import DishOut
+from app.controllers import menu as menu_controller
 
 router = APIRouter(prefix="/menu", tags=["menu"])
 
 @router.post("/{establishment_id}", response_model=MenuOut, status_code=201, summary="Crear nuevo menú")
-async def create_menu_item(
+async def create_menu(
     menu: MenuCreate,
     establishment_id: int = Path(..., title="ID del establecimiento"),
     db: AsyncSession = Depends(get_db)
 ):
     """Crear un nuevo menú para un establecimiento"""
-    return {"msg": "Menú creado"}
+    return await menu_controller.create_menu(menu, db)
 
 @router.get("/{menu_id}", response_model=List[DishOut], summary="Listar todos los ítems de menú")
 async def list_all_menu_items(
@@ -22,7 +23,7 @@ async def list_all_menu_items(
     db: AsyncSession = Depends(get_db)
 ):
     """Obtener todos los platos de un menú específico"""
-    return []
+    return await menu_controller.get_menu_dishes(menu_id, db)
 
 @router.get("/establecimiento/{establishment_id}", response_model=List[MenuOut], summary="Listar menus por establecimiento")
 async def list_items_by_establishment(
@@ -30,7 +31,7 @@ async def list_items_by_establishment(
     db: AsyncSession = Depends(get_db)
 ):
     """Obtener todos los menús de un establecimiento"""
-    return []
+    return await menu_controller.get_menus_by_establishment(establishment_id, db)
 
 @router.get("/{menu_id}/categoria/{category_id}", response_model=List[DishOut], summary="Filtrar ítems por categoría")
 async def list_items_by_category(
@@ -39,7 +40,7 @@ async def list_items_by_category(
     db: AsyncSession = Depends(get_db)
 ):
     """Filtrar platos de un menú por categoría"""
-    return []
+    return await menu_controller.get_menu_dishes_by_category(menu_id, category_id, db)
 
 @router.get("/{menu_id}/item/{item_id}", response_model=DishOut, summary="Obtener detalle de un ítem de menú")
 async def get_menu_item(
@@ -48,7 +49,7 @@ async def get_menu_item(
     db: AsyncSession = Depends(get_db)
 ):
     """Obtener detalle de un plato específico del menú"""
-    return {"msg": f"Detalle del ítem de menú {item_id} en el menú {menu_id}"}
+    return await menu_controller.get_menu_dish(menu_id, item_id, db)
 
 # Actualizar menú
 @router.put("/{menu_id}", response_model=MenuOut, summary="Actualizar menú")
@@ -58,7 +59,7 @@ async def update_menu_item(
     db: AsyncSession = Depends(get_db)
 ):
     """Actualizar un menú existente"""
-    return {"msg": f"Menú {menu_id} actualizado"}
+    return await menu_controller.update_menu(menu_id, menu, db)
 
 # Eliminar menú
 @router.delete("/{menu_id}", response_model=MenuMessageOut, summary="Eliminar ítem de menú")
@@ -67,4 +68,4 @@ async def delete_menu_item(
     db: AsyncSession = Depends(get_db)
 ):
     """Eliminar un menú"""
-    return {"message": f"Ítem de menú {menu_id} eliminado"}
+    return await menu_controller.delete_menu(menu_id, db)
