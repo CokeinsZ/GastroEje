@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.database import create_tables
+# Import all models so they're registered with SQLAlchemy Base
+from app.models import *
 from app.routes.accessibility_features import router as accessibility_router
 from app.routes.allergens import router as allergen_router
 from app.routes.categories import router as category_router
@@ -14,7 +17,7 @@ from app.routes.users import router as user_router
 app = FastAPI()
 
 origins = [
-    "http://localhost:3000"
+    "*"
 ]
 
 app.add_middleware(
@@ -34,3 +37,7 @@ app.include_router(menu_router)
 app.include_router(reservation_router)
 app.include_router(review_router)
 app.include_router(user_router) 
+
+@app.on_event("startup")
+async def on_startup():
+    await create_tables()
