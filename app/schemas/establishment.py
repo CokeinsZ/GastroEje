@@ -17,6 +17,18 @@ class EstablishmentBase(BaseModel):
 class EstablishmentCreate(EstablishmentBase):
     pass
 
+class EstablishmentUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    sustainability_points: Optional[int] = None
+    address: Optional[str] = None
+    mean_waiting_time: Optional[float] = None
+    opening_hour: Optional[datetime] = None
+    closing_hour: Optional[datetime] = None
+    phone_number: Optional[str] = None
+    website: Optional[str] = None
+    logo: Optional[str] = None
+
 class EstablishmentOut(EstablishmentBase):
     establishment_id: int
     model_config = ConfigDict(from_attributes=True)
