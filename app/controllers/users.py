@@ -71,7 +71,7 @@ async def login_user_controller(login_data: UserLogin, db: AsyncSession) -> User
     from app.utils.jwt import create_access_token
     token = create_access_token({"sub": user.email})
     
-    return UserLoginOut(message="Login successful", user_id=user.id, access_token=token)
+    return UserLoginOut(message="Login successful", user_id=user.user_id, access_token=token)
 
 async def list_users_controller(db: AsyncSession) -> List[UserOut]:
     """Obtener lista de todos los usuarios"""
@@ -79,18 +79,18 @@ async def list_users_controller(db: AsyncSession) -> List[UserOut]:
     result = await db.execute(query)
     users = result.scalars().all()
     
-    return [UserOut(id=user.id, email=user.email, name=user.name) for user in users]
+    return [UserOut.model_validate(user) for user in users]
 
 async def get_user_by_id_controller(user_id: int, db: AsyncSession) -> UserOut:
     """Obtener un usuario por su ID"""
-    query = select(User).filter(User.id == user_id)
+    query = select(User).filter(User.user_id == user_id)
     result = await db.execute(query)
     user = result.scalar_one_or_none()
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    return UserOut(id=user.id, email=user.email, name=user.name)
+    return UserOut.model_validate(user)
 
 async def get_user_by_email_controller(email: str, db: AsyncSession) -> UserOut:
     """Obtener un usuario por su email"""
@@ -101,33 +101,43 @@ async def get_user_by_email_controller(email: str, db: AsyncSession) -> UserOut:
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    return UserOut(id=user.id, email=user.email, name=user.name)
+    return UserOut.model_validate(user)
 
 async def update_user_controller(user_data: UserUpdate, user_id: int, db: AsyncSession) -> UserOut:
     """Actualizar información de un usuario"""
-    query = select(User).filter(User.id == user_id)
+    query = select(User).filter(User.user_id == user_id)
     result = await db.execute(query)
     user = result.scalar_one_or_none()
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    user.email = user_data.email
-    user.name = user_data.name
+    # Actualizar solo los campos proporcionados
+    if user_data.name is not None:
+        user.name = user_data.name
+    if user_data.last_name is not None:
+        user.last_name = user_data.last_name
+    if user_data.phone is not None:
+        user.phone = user_data.phone
+    
     db.add(user)
     await db.commit()
     await db.refresh(user)
     
-    return UserOut(id=user.id, email=user.email, name=user.name)
+    return UserOut.model_validate(user)
 
 async def change_password_controller(password_data: ChangePassword, user_id: int, db: AsyncSession) -> UserMessageOut:
     """Cambiar la contraseña de un usuario"""
-    query = select(User).filter(User.id == user_id)
+    query = select(User).filter(User.user_id == user_id)
     result = await db.execute(query)
     user = result.scalar_one_or_none()
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # Verificar la contraseña actual
+    if not verify_password(password_data.current_password, user.password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
     
     # Encriptar la nueva contraseña antes de guardarla
     hashed_password = hash_password(password_data.new_password)
@@ -139,7 +149,7 @@ async def change_password_controller(password_data: ChangePassword, user_id: int
 
 async def update_allergens_controller(user_id: int, db: AsyncSession) -> UserMessageOut:
     """Actualizar alergias del usuario"""
-    query = select(User).filter(User.id == user_id)
+    query = select(User).filter(User.user_id == user_id)
     result = await db.execute(query)
     user = result.scalar_one_or_none()
     
@@ -155,7 +165,7 @@ async def update_allergens_controller(user_id: int, db: AsyncSession) -> UserMes
 
 async def change_role_controller(role_data: UpdateRole, user_id: int, db: AsyncSession) -> UserMessageOut:
     """Cambiar el rol de un usuario"""
-    query = select(User).filter(User.id == user_id)
+    query = select(User).filter(User.user_id == user_id)
     result = await db.execute(query)
     user = result.scalar_one_or_none()
     
@@ -170,7 +180,7 @@ async def change_role_controller(role_data: UpdateRole, user_id: int, db: AsyncS
 
 async def change_status_controller(status_data: UpdateStatus, user_id: int, db: AsyncSession) -> UserMessageOut:
     """Cambiar el estado de un usuario"""
-    query = select(User).filter(User.id == user_id)
+    query = select(User).filter(User.user_id == user_id)
     result = await db.execute(query)
     user = result.scalar_one_or_none()
     
@@ -185,7 +195,7 @@ async def change_status_controller(status_data: UpdateStatus, user_id: int, db: 
 
 async def delete_user_controller(user_id: int, db: AsyncSession) -> UserMessageOut:
     """Eliminar un usuario"""
-    query = select(User).filter(User.id == user_id)
+    query = select(User).filter(User.user_id == user_id)
     result = await db.execute(query)
     user = result.scalar_one_or_none()
     

@@ -14,7 +14,7 @@ class Establishment(Base):
   mean_waiting_time = Column(Float)
   opening_hour = Column(Time)
   closing_hour = Column(Time)
-  phone_number = Column(String(12))
+  phone_number = Column(String(30))
   website = Column(String(255))
   logo = Column(String(255))
 

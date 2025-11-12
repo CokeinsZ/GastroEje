@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
 
 from app.database import create_tables
 # Import all models so they're registered with SQLAlchemy Base
@@ -14,7 +15,17 @@ from app.routes.reservations import router as reservation_router
 from app.routes.reviews import router as review_router
 from app.routes.users import router as user_router
 
-app = FastAPI()
+# Configuración de seguridad para Swagger
+security = HTTPBearer()
+
+app = FastAPI(
+    title="GastroEje API",
+    description="API para la gestión de restaurantes y menús",
+    version="1.0.0",
+    swagger_ui_parameters={
+        "persistAuthorization": True
+    }
+)
 
 origins = [
     "*"
@@ -38,6 +49,3 @@ app.include_router(reservation_router)
 app.include_router(review_router)
 app.include_router(user_router) 
 
-@app.on_event("startup")
-async def on_startup():
-    await create_tables()

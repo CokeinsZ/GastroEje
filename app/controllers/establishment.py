@@ -17,15 +17,13 @@ async def create_establishment(db: AsyncSession, data: EstablishmentCreate) -> E
 
 # ---------- LEER ----------
 async def get_establishment_by_id(db: AsyncSession, establishment_id: int) -> Optional[Establishment]:
-    query = select(Establishment).where(Establishment.id == establishment_id)
+    query = select(Establishment).where(Establishment.establishment_id == establishment_id)
     result = await db.execute(query)
     return result.scalar_one_or_none()
 
 
-async def get_establishments(db: AsyncSession, *, is_active: Optional[bool] = True) -> Sequence[Establishment]:
+async def get_establishments(db: AsyncSession) -> Sequence[Establishment]:
     query = select(Establishment)
-    if is_active is not None:
-        query = query.where(Establishment.is_active == is_active)
     result = await db.execute(query)
     return result.scalars().all()
 
@@ -40,7 +38,7 @@ async def update_establishment(
 
     query = (
         update(Establishment)
-        .where(Establishment.id == establishment_id)
+        .where(Establishment.establishment_id == establishment_id)
         .values(**payload)
         .execution_options(synchronize_session="fetch")
     )
@@ -51,7 +49,7 @@ async def update_establishment(
 
 # ---------- ELIMINAR (borrado físico) ----------
 async def delete_establishment(db: AsyncSession, establishment_id: int) -> bool:
-    query = delete(Establishment).where(Establishment.id == establishment_id)
+    query = delete(Establishment).where(Establishment.establishment_id == establishment_id)
     result = await db.execute(query)
     await db.commit()
     return result.rowcount > 0

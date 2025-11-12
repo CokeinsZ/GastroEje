@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import datetime
 
 class EstablishmentBase(BaseModel):
+    NIT: str
     name: str
     description: Optional[str] = None
     sustainability_points: Optional[int] = None
@@ -18,6 +19,7 @@ class EstablishmentCreate(EstablishmentBase):
     pass
 
 class EstablishmentUpdate(BaseModel):
+    NIT: Optional[str] = None
     name: Optional[str] = None
     description: Optional[str] = None
     sustainability_points: Optional[int] = None

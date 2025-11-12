@@ -2,13 +2,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from fastapi import HTTPException
 from app.models.users import User
-from app.schemas.auth import AuthBase
+from app.schemas.users import UserLogin
 from app.utils.hashing import verify_password
 from app.utils.jwt import create_access_token
 
-async def authenticate_user(db: AsyncSession, user: AuthBase):
+async def authenticate_user(db: AsyncSession, user: UserLogin):
     """Autenticar al usuario y devolver el token JWT"""
-    query = select(User).where(User.email == user.user)
+    query = select(User).where(User.email == user.email)
     result = await db.execute(query)
     findUser = result.scalar_one_or_none()
 
@@ -18,6 +18,8 @@ async def authenticate_user(db: AsyncSession, user: AuthBase):
     # Generar el token JWT
     token = create_access_token({"sub": findUser.email})
     return {
+        "message": "Login successful",
+        "user_id": findUser.user_id,
         "access_token": token,
         "token_type": "bearer"
     }

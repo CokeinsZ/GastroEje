@@ -1,14 +1,14 @@
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Dict
 
 SECRET_KEY = "mi_clave_super_secreta"  # Cambia esto por una clave segura
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/usuarios/login")
+security = HTTPBearer()
 
 # Crear token
 def create_access_token(data: dict, expires_delta: timedelta = None):
@@ -30,6 +30,7 @@ def verify_access_token(token: str) -> Dict:
         )
 
 # Obtener usuario actual desde el token
-def get_current_user(token: str = Depends(oauth2_scheme)) -> str:
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+    token = credentials.credentials
     payload = verify_access_token(token)
     return payload.get("sub")
