@@ -39,12 +39,6 @@ async def register_user_controller(user_data: UserCreate, db: AsyncSession) -> U
     if user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Asegúrate de que `role` sea una cadena y conviértelo al enum UserRole
-    try:
-        role = UserRole[user_data.role]  # Convierte la cadena "user" o "admin" al enum correspondiente
-    except KeyError:
-        raise HTTPException(status_code=400, detail=f"Invalid role value: {user_data.role}")
-    
     # Encriptar la contraseña antes de guardarla
     hashed_password = hash_password(user_data.password)
     
@@ -53,16 +47,16 @@ async def register_user_controller(user_data: UserCreate, db: AsyncSession) -> U
         email=user_data.email,
         password=hashed_password,
         name=user_data.name,
-        last_name=user_data.last_name,  # Asegúrate de que este campo esté siendo usado si es necesario
+        last_name=user_data.last_name,
         phone=user_data.phone,
-        role="user",  # Asegúrate de que el role se esté pasando correctamente
-        status="active",  # El valor del status ya debería coincidir con los valores del enum UserStatus
+        role=user_data.role,  # user_data.role ya es un enum UserRole
+        status=user_data.status,  # user_data.status ya es un enum UserStatus
     )
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
     
-    return UserLoginOut(message="User created successfully", user_id=new_user.id)
+    return UserLoginOut(message="User created successfully", user_id=new_user.user_id)
 
 async def login_user_controller(login_data: UserLogin, db: AsyncSession) -> UserLoginOut:
     """Iniciar sesión de usuario y generar un token JWT"""

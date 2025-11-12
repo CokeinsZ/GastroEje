@@ -5,8 +5,8 @@ from app.database import Base
 class Establishment(Base):
   __tablename__ = "establishments"
 
-  establishment_id = Column(Integer, primary_key=True, index=True)
-  NIT = Column(String(16), primary_key=True, index=True)
+  establishment_id = Column(Integer, primary_key=True, autoincrement=True, index=True)
+  NIT = Column(String(16), unique=True, nullable=False, index=True)
   name = Column(String(32), nullable=False)
   description = Column(Text)
   sustainability_points = Column(Integer, default=0)

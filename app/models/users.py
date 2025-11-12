@@ -9,10 +9,10 @@ class UserRole(enum.Enum):
   user = "user"
 
 class UserStatus(enum.Enum):
-  ACTIVE = "active"
-  INACTIVE = "inactive"
-  NOT_VERIFIED = "not_verified"
-  BANNED = "banned"
+  active = "active"
+  inactive = "inactive"
+  not_verified = "not_verified"
+  banned = "banned"
 
 class User(Base):
   __tablename__ = "users"
@@ -24,7 +24,7 @@ class User(Base):
   email = Column(String(255), unique=True, nullable=False, index=True)
   password = Column(String(255), nullable=False)
   phone = Column(String(13))
-  status = Column(Enum(UserStatus), default=UserStatus.ACTIVE)
+  status = Column(Enum(UserStatus), default=UserStatus.active)
   created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
   updated_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
