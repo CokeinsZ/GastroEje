@@ -4,16 +4,7 @@ from typing import List
 from app.database import get_db
 from app.schemas.menus import MenuCreate, MenuUpdate, MenuOut, MenuMessageOut
 from app.schemas.dishes import DishOut
-from app.controllers.menu import (
-    create_menu_controller,
-    get_menu_by_id,
-    get_menus_by_establishment,
-    get_dishes_by_menu,
-    get_dishes_by_menu_and_category,
-    get_dish_from_menu,
-    update_menu_controller,
-    delete_menu_controller
-)
+from app.controllers.menu import *
 
 router = APIRouter(prefix="/menu", tags=["menu"])
 

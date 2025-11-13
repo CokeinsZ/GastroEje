@@ -3,51 +3,64 @@ from fastapi import APIRouter, Depends, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
-from app.database import get_db
-from app.schemas.reservations import ReservationsCreate, ReservationsOut
-from app.schemas.category import MessageOut
+from app.database import get_session
+from app.schemas.reservations import ReservationsCreate, ReservationUpdate, ReservationOut
+from app.schemas.category import MessageOut 
+
+from app.controllers.reservations import *
 
 router = APIRouter(prefix="/reservas", tags=["Reservas"])
 
-# Listar reservas → GET
-@router.get("/list", response_model=List[ReservationsOut])
-async def list_reservas(db: AsyncSession = Depends(get_db)):
-    """Obtener lista de todas las reservas"""
-    return []
 
-# Cancelar reservas → DELETE
+# -----------------------
+# LISTAR RESERVAS → GET
+# -----------------------
+@router.get("/list", response_model=List[ReservationOut])
+async def list_reservas(db: AsyncSession = Depends(get_session)):
+    return await get_reservations(db)
+
+
+# -----------------------
+# CANCELAR RESERVA → DELETE
+# -----------------------
 @router.delete("/{reserva_id}", response_model=MessageOut)
 async def cancelar_reserva(
     reserva_id: int = Path(..., ge=1, description="ID de la reserva"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
 ):
-    """Cancelar una reserva"""
-    return {"msg": f"Reserva {reserva_id} cancelada"}
+    deleted = await delete_reservation(db, reserva_id)
+    return {"msg": "Reserva eliminada correctamente"} if deleted else {"msg": "Reserva no encontrada"}
 
-# Actualizar reserva → POST (según tu requerimiento)
-@router.post("/{reserva_id}/actualizar", response_model=ReservationsOut)
+
+# -----------------------
+# ACTUALIZAR RESERVA → POST
+# -----------------------
+@router.post("/{reserva_id}/actualizar", response_model=ReservationOut)
 async def actualizar_reserva(
-    reservation: ReservationsCreate,
+    reservation: ReservationUpdate,
     reserva_id: int = Path(..., ge=1, description="ID de la reserva"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session)
 ):
-    """Actualizar una reserva existente"""
-    return {"msg": f"Reserva {reserva_id} actualizada"}
+    return await update_reservation(db, reserva_id, reservation)
 
-# Mostrar info de la reserva → GET
-@router.get("/{reserva_id}", response_model=ReservationsOut)
+
+# -----------------------
+# MOSTRAR RESERVA → GET
+# -----------------------
+@router.get("/{reserva_id}", response_model=ReservationOut)
 async def get_reserva(
     reserva_id: int = Path(..., ge=1, description="ID de la reserva"),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session)
 ):
-    """Obtener información de una reserva específica"""
-    return {"msg": f"Información de la reserva {reserva_id}"}
+    return await get_reservation_by_id(db, reserva_id)
 
-# Registrar reserva → POST
-@router.post("/", response_model=ReservationsOut, status_code=201)
+
+# -----------------------
+# REGISTRAR RESERVA → POST
+# -----------------------
+@router.post("/", response_model=ReservationOut, status_code=201)
 async def registrar_reserva(
     reservation: ReservationsCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_session)
 ):
-    """Registrar una nueva reserva"""
-    return {"msg": "Reserva registrada correctamente"}
+    return await create_reservation(db, reservation)
