@@ -12,7 +12,7 @@ engine = create_async_engine(
     TEST_DATABASE_URL,
     connect_args={"check_same_thread": False},
 )
-TestingSessionLocal = async_sessionmaker(autocommit=False, autoflush=False, bind=engine)
+TestingSessionLocal = async_sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 
 @pytest.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, time
 
 class EstablishmentBase(BaseModel):
     NIT: str
@@ -9,8 +9,8 @@ class EstablishmentBase(BaseModel):
     sustainability_points: Optional[int] = None
     address: str
     mean_waiting_time: Optional[float] = None
-    opening_hour: datetime
-    closing_hour: datetime
+    opening_hour: time
+    closing_hour: time
     phone_number: Optional[str] = None
     website: Optional[str] = None
     logo: Optional[str] = None
@@ -25,8 +25,8 @@ class EstablishmentUpdate(BaseModel):
     sustainability_points: Optional[int] = None
     address: Optional[str] = None
     mean_waiting_time: Optional[float] = None
-    opening_hour: Optional[datetime] = None
-    closing_hour: Optional[datetime] = None
+    opening_hour: Optional[time] = None
+    closing_hour: Optional[time] = None
     phone_number: Optional[str] = None
     website: Optional[str] = None
     logo: Optional[str] = None
