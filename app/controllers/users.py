@@ -56,7 +56,10 @@ async def register_user_controller(user_data: UserCreate, db: AsyncSession) -> U
     await db.commit()
     await db.refresh(new_user)
     
-    return UserLoginOut(message="User created successfully", user_id=new_user.user_id)
+    from app.utils.jwt import create_access_token
+    token = create_access_token({"sub": new_user.email})
+    
+    return UserLoginOut(message="User created successfully", user_id=new_user.user_id, access_token=token)
 
 async def login_user_controller(login_data: UserLogin, db: AsyncSession) -> UserLoginOut:
     """Iniciar sesión de usuario y generar un token JWT"""
