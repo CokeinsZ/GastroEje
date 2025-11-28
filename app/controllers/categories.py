@@ -3,6 +3,10 @@ from sqlalchemy.future import select
 from sqlalchemy import update, delete
 from fastapi import HTTPException, status
 from app.models.categories import Category
+from app.models.establishment_category import EstablishmentCategory
+from app.models.dish_category import DishCategory
+from app.models.establishments import Establishment
+from app.models.dishes import Dish
 from app.schemas.category import CategoryCreate, CategoryUpdate
 
 # Obtener todas las categorías
@@ -180,4 +184,240 @@ async def search_categories_by_name(db: AsyncSession, name: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error en la búsqueda: {str(e)}"
+        )
+
+
+# Obtener establecimientos por categoría
+async def get_establishments_by_category(db: AsyncSession, category_id: int):
+    """Obtener todos los establecimientos de una categoría"""
+    try:
+        # Verificar que la categoría existe
+        category_query = select(Category).where(Category.category_id == category_id)
+        category_result = await db.execute(category_query)
+        category = category_result.scalar_one_or_none()
+        
+        if not category:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Categoría con ID {category_id} no encontrada"
+            )
+        
+        # Obtener los establecimientos
+        query = (
+            select(Establishment)
+            .join(EstablishmentCategory)
+            .where(EstablishmentCategory.category_id == category_id)
+        )
+        result = await db.execute(query)
+        establishments = result.scalars().all()
+        return establishments
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener establecimientos: {str(e)}"
+        )
+
+
+# Agregar categoría a establecimiento
+async def add_category_to_establishment(db: AsyncSession, establishment_id: int, category_id: int):
+    """Asociar una categoría a un establecimiento"""
+    try:
+        # Verificar que el establecimiento existe
+        est_query = select(Establishment).where(Establishment.establishment_id == establishment_id)
+        est_result = await db.execute(est_query)
+        establishment = est_result.scalar_one_or_none()
+        
+        if not establishment:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Establecimiento con ID {establishment_id} no encontrado"
+            )
+        
+        # Verificar que la categoría existe
+        cat_query = select(Category).where(Category.category_id == category_id)
+        cat_result = await db.execute(cat_query)
+        category = cat_result.scalar_one_or_none()
+        
+        if not category:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Categoría con ID {category_id} no encontrada"
+            )
+        
+        # Verificar si ya existe la asociación
+        existing_query = select(EstablishmentCategory).where(
+            EstablishmentCategory.establishment_id == establishment_id,
+            EstablishmentCategory.category_id == category_id
+        )
+        existing_result = await db.execute(existing_query)
+        existing = existing_result.scalar_one_or_none()
+        
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="La categoría ya está asociada a este establecimiento"
+            )
+        
+        # Crear la asociación
+        est_cat = EstablishmentCategory(establishment_id=establishment_id, category_id=category_id)
+        db.add(est_cat)
+        await db.commit()
+        return True
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al asociar categoría: {str(e)}"
+        )
+
+
+# Eliminar categoría de establecimiento
+async def remove_category_from_establishment(db: AsyncSession, establishment_id: int, category_id: int):
+    """Eliminar la asociación de una categoría con un establecimiento"""
+    try:
+        result = await db.execute(
+            select(EstablishmentCategory)
+            .where(EstablishmentCategory.establishment_id == establishment_id)
+            .where(EstablishmentCategory.category_id == category_id)
+        )
+        est_cat = result.scalar_one_or_none()
+        
+        if not est_cat:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Asociación no encontrada"
+            )
+        
+        await db.delete(est_cat)
+        await db.commit()
+        return True
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al eliminar asociación: {str(e)}"
+        )
+
+
+# Obtener platos por categoría
+async def get_dishes_by_category(db: AsyncSession, category_id: int):
+    """Obtener todos los platos de una categoría"""
+    try:
+        # Verificar que la categoría existe
+        category_query = select(Category).where(Category.category_id == category_id)
+        category_result = await db.execute(category_query)
+        category = category_result.scalar_one_or_none()
+        
+        if not category:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Categoría con ID {category_id} no encontrada"
+            )
+        
+        # Obtener los platos
+        query = (
+            select(Dish)
+            .join(DishCategory)
+            .where(DishCategory.category_id == category_id)
+        )
+        result = await db.execute(query)
+        dishes = result.scalars().all()
+        return dishes
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener platos: {str(e)}"
+        )
+
+
+# Agregar categoría a plato
+async def add_category_to_dish(db: AsyncSession, dish_id: int, category_id: int):
+    """Asociar una categoría a un plato"""
+    try:
+        # Verificar que el plato existe
+        dish_query = select(Dish).where(Dish.dish_id == dish_id)
+        dish_result = await db.execute(dish_query)
+        dish = dish_result.scalar_one_or_none()
+        
+        if not dish:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Plato con ID {dish_id} no encontrado"
+            )
+        
+        # Verificar que la categoría existe
+        cat_query = select(Category).where(Category.category_id == category_id)
+        cat_result = await db.execute(cat_query)
+        category = cat_result.scalar_one_or_none()
+        
+        if not category:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Categoría con ID {category_id} no encontrada"
+            )
+        
+        # Verificar si ya existe la asociación
+        existing_query = select(DishCategory).where(
+            DishCategory.dish_id == dish_id,
+            DishCategory.category_id == category_id
+        )
+        existing_result = await db.execute(existing_query)
+        existing = existing_result.scalar_one_or_none()
+        
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="La categoría ya está asociada a este plato"
+            )
+        
+        # Crear la asociación
+        dish_cat = DishCategory(dish_id=dish_id, category_id=category_id)
+        db.add(dish_cat)
+        await db.commit()
+        return True
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al asociar categoría: {str(e)}"
+        )
+
+
+# Eliminar categoría de plato
+async def remove_category_from_dish(db: AsyncSession, dish_id: int, category_id: int):
+    """Eliminar la asociación de una categoría con un plato"""
+    try:
+        result = await db.execute(
+            select(DishCategory)
+            .where(DishCategory.dish_id == dish_id)
+            .where(DishCategory.category_id == category_id)
+        )
+        dish_cat = result.scalar_one_or_none()
+        
+        if not dish_cat:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Asociación no encontrada"
+            )
+        
+        await db.delete(dish_cat)
+        await db.commit()
+        return True
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al eliminar asociación: {str(e)}"
         )

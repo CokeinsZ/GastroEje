@@ -3,6 +3,8 @@ from sqlalchemy.future import select
 from sqlalchemy import update, delete
 from fastapi import HTTPException, status
 from app.models.dishes import Dish
+from app.models.dish_allergen import DishAllergen
+from app.models.allergens import Allergens
 from app.schemas.dishes import DishCreate, DishUpdate
 
 # Obtener todos los platos
@@ -155,7 +157,7 @@ async def delete_dish(db: AsyncSession, dish_id: int):
         await db.execute(query)
         await db.commit()
 
-        return {"message": f"Plato con ID {dish_id} eliminado correctamente"}
+        return {"msg": f"Plato con ID {dish_id} eliminado correctamente"}
         
     except HTTPException:
         raise
@@ -192,4 +194,122 @@ async def get_dishes_price_gt(db: AsyncSession, min_price: float):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al obtener platos: {str(e)}"
+        )
+
+
+# Obtener alérgenos de un plato
+async def get_allergens_by_dish(db: AsyncSession, dish_id: int):
+    """Obtener todos los alérgenos de un plato específico"""
+    try:
+        # Verificar que el plato existe
+        dish_query = select(Dish).where(Dish.dish_id == dish_id)
+        dish_result = await db.execute(dish_query)
+        dish = dish_result.scalar_one_or_none()
+        
+        if not dish:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Plato con ID {dish_id} no encontrado"
+            )
+        
+        # Obtener los alérgenos
+        query = (
+            select(Allergens)
+            .join(DishAllergen)
+            .where(DishAllergen.dish_id == dish_id)
+        )
+        result = await db.execute(query)
+        allergens = result.scalars().all()
+        return allergens
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener alérgenos del plato: {str(e)}"
+        )
+
+
+# Agregar alérgeno a un plato
+async def add_allergen_to_dish(db: AsyncSession, dish_id: int, allergen_id: int):
+    """Asociar un alérgeno a un plato"""
+    try:
+        # Verificar que el plato existe
+        dish_query = select(Dish).where(Dish.dish_id == dish_id)
+        dish_result = await db.execute(dish_query)
+        dish = dish_result.scalar_one_or_none()
+        
+        if not dish:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Plato con ID {dish_id} no encontrado"
+            )
+        
+        # Verificar que el alérgeno existe
+        allergen_query = select(Allergens).where(Allergens.allergen_id == allergen_id)
+        allergen_result = await db.execute(allergen_query)
+        allergen = allergen_result.scalar_one_or_none()
+        
+        if not allergen:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Alérgeno con ID {allergen_id} no encontrado"
+            )
+        
+        # Verificar si ya existe la asociación
+        existing_query = select(DishAllergen).where(
+            DishAllergen.dish_id == dish_id,
+            DishAllergen.allergen_id == allergen_id
+        )
+        existing_result = await db.execute(existing_query)
+        existing = existing_result.scalar_one_or_none()
+        
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El alérgeno ya está asociado a este plato"
+            )
+        
+        # Crear la asociación
+        dish_allergen = DishAllergen(dish_id=dish_id, allergen_id=allergen_id)
+        db.add(dish_allergen)
+        await db.commit()
+        return True
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al asociar alérgeno al plato: {str(e)}"
+        )
+
+
+# Eliminar alérgeno de un plato
+async def remove_allergen_from_dish(db: AsyncSession, dish_id: int, allergen_id: int):
+    """Eliminar la asociación de un alérgeno con un plato"""
+    try:
+        result = await db.execute(
+            select(DishAllergen)
+            .where(DishAllergen.dish_id == dish_id)
+            .where(DishAllergen.allergen_id == allergen_id)
+        )
+        dish_allergen = result.scalar_one_or_none()
+        
+        if not dish_allergen:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Asociación no encontrada"
+            )
+        
+        await db.delete(dish_allergen)
+        await db.commit()
+        return True
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al eliminar asociación: {str(e)}"
         )

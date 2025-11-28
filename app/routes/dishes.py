@@ -7,6 +7,7 @@ from typing import List, Optional
 from app.database import get_db
 from app.schemas.dishes import DishCreate, DishOut, DishUpdate
 from app.schemas.category import MessageOut
+from app.schemas.allergens import AllergenOut
 from app.controllers.dishes import (
     get_all_dishes, 
     get_dish_by_id, 
@@ -14,7 +15,10 @@ from app.controllers.dishes import (
     update_dish, 
     delete_dish,
     get_dishes_by_menu,
-    get_dishes_price_gt
+    get_dishes_price_gt,
+    get_allergens_by_dish,
+    add_allergen_to_dish,
+    remove_allergen_from_dish
 )
 from app.models.dishes import Dish 
 
@@ -84,16 +88,38 @@ async def list_platos_price_gt(
     return await get_dishes_price_gt(db, min_price)
 
 # Mostrar alérgenos → GET
-@router.get("/{plato_id}/alergenos", response_model=List[dict])
+@router.get("/{plato_id}/alergenos", response_model=List[AllergenOut])
 async def mostrar_alergenos(
     plato_id: int = Path(..., ge=1, description="ID del plato"),
     db: AsyncSession = Depends(get_db),
 ):
     """Obtener los alérgenos de un plato"""
-    # Verificar que el plato existe
-    dish = await get_dish_by_id(db, plato_id)
-    
-    return []
+    return await get_allergens_by_dish(db, plato_id)
+
+
+# Agregar alérgeno a un plato → POST
+@router.post("/{plato_id}/alergenos/{allergen_id}", response_model=MessageOut)
+async def agregar_alergeno(
+    plato_id: int = Path(..., ge=1, description="ID del plato"),
+    allergen_id: int = Path(..., ge=1, description="ID del alérgeno"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Asociar un alérgeno a un plato"""
+    await add_allergen_to_dish(db, plato_id, allergen_id)
+    return {"msg": "Alérgeno asociado al plato correctamente"}
+
+
+# Eliminar alérgeno de un plato → DELETE
+@router.delete("/{plato_id}/alergenos/{allergen_id}", response_model=MessageOut)
+async def eliminar_alergeno(
+    plato_id: int = Path(..., ge=1, description="ID del alérgeno"),
+    allergen_id: int = Path(..., ge=1, description="ID del alérgeno"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Eliminar la asociación de un alérgeno con un plato"""
+    await remove_allergen_from_dish(db, plato_id, allergen_id)
+    return {"msg": "Alérgeno eliminado del plato correctamente"}
+
 
 # Obtener platos por nombre (búsqueda) → GET
 @router.get("/search/{name}", response_model=List[DishOut])
