@@ -1,28 +1,37 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 
 class ReservationStatusEnum(str, Enum):
-    PENDING = "PENDING"
-    CONFIRMED = "CONFIRMED"
-    CANCELLED = "CANCELLED"
+    pending = "pending"
+    confirmed = "confirmed"
+    cancelled = "cancelled"
 
 class ReservationsBase(BaseModel):
-    reservation_id: int
     user_id: int
     establishment_id: int
     date: datetime
     people_count: int
-    status: ReservationStatusEnum
-    created_at: datetime
-    updated_at: datetime
 
 class ReservationsCreate(ReservationsBase):
     pass
 
+class ReservationsUpdate(BaseModel):
+    date: Optional[datetime] = None
+    people_count: Optional[int] = None
+    status: Optional[ReservationStatusEnum] = None
+
 class ReservationsOut(ReservationsBase):
-    id_reservation: int  
+    reservation_id: int
+    status: ReservationStatusEnum
+    created_at: datetime
+    updated_at: datetime
+    
     model_config = ConfigDict(from_attributes=True)
+
+class MessageOut(BaseModel):
+    message: str
 
 
