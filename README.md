@@ -1,10 +1,9 @@
 
+### i. Explicación detallada de la estructura de carpetas y módulos
 
-i. Explicación detallada de la estructura de carpetas y módulos
+El proyecto sigue una arquitectura por capas: `routes` → `controllers` → `models/schemas` → `database/utils`.
 
-El proyecto sigue una arquitectura por capas: **routes → controllers → models/schemas → database/utils**.
-
-
+```text
 GastroEje/
 ├── app/
 │   ├── controllers/
@@ -19,16 +18,12 @@ GastroEje/
 │   │   ├── accessibility_features.py
 │   │   ├── allergens.py
 │   │   ├── categories.py
-│   │   ├── dish_allergen.py
-│   │   ├── dish_category.py
 │   │   ├── dishes.py
-│   │   ├── establishment_category.py
 │   │   ├── establishments.py
 │   │   ├── menus.py
 │   │   ├── reservations.py
 │   │   ├── reviews.py
-│   │   ├── user_allergen.py
-│   │   └── users.py
+│   │   └── user_allergen.py
 │   ├── routes/
 │   │   ├── accessibility_features.py
 │   │   ├── allergens.py
@@ -36,33 +31,27 @@ GastroEje/
 │   │   ├── dishes.py
 │   │   ├── establishments.py
 │   │   ├── menu.py
-│   │   ├── reservations.py
-│   │   ├── resenas.py
-│   │   └── users.py
+│   │   ├── reservas.py
+│   │   └── resenas.py
 │   ├── schemas/
-│   │   ├── accessibility_features.py
-│   │   ├── allergens.py
-│   │   ├── category.py
-│   │   ├── dishes.py
-│   │   ├── establishment.py
-│   │   ├── menus.py
-│   │   ├── reservations.py
-│   │   ├── review.py
-│   │   └── users.py
 │   ├── utils/
 │   │   ├── hashing.py
 │   │   └── jwt.py
 │   ├── config.py
 │   ├── database.py
-│   ├── main.py
-│   └── tests/
-├── migrate_enums.py
+│   └── main.py
+├── tests/
 ├── recreate_tables.py
+├── migrate_enums.py
 ├── requirements.txt
-├── pytest.ini
-├── .env
-├── .gitignore
-└── venv/
+└── .env
+
+```
+
+
+
+
+
 
 ## i. Estructura de carpetas y modulos
 
