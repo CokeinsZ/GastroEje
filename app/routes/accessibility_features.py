@@ -91,7 +91,7 @@ async def update_accessibility_feature(
         raise HTTPException(status_code=404, detail="Accessibility feature not found")
     
     # Actualizar solo los campos proporcionados
-    update_data = feature_data.dict(exclude_unset=True)
+    update_data = feature_data.model_dump(exclude_unset=True)
     
     # Si se está actualizando el nombre, verificar que no exista otro con el mismo nombre en el mismo establecimiento
     if 'name' in update_data and update_data['name'] != feature.name:
