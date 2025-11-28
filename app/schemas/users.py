@@ -45,6 +45,8 @@ class UserOut(UserBase):
 class UserLoginOut(BaseModel):
     message: str
     user_id: int
+    access_token: str
+    token_type: str = "bearer"
 
 class UserMessageOut(BaseModel):
     message: str
