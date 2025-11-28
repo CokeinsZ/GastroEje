@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from app.models.menus import Menu
 from app.models.establishments import Establishment
 from app.models.dishes import Dish
+from app.models.dish_category import DishCategory
 from app.schemas.menus import MenuCreate, MenuUpdate, MenuOut
 
 
@@ -64,9 +65,13 @@ async def get_dishes_by_menu_and_category(db: AsyncSession, menu_id: int, catego
     if not menu:
         raise HTTPException(status_code=404, detail="Menu not found")
     
-    # Aquí necesitarías hacer un join con dish_category si quieres filtrar por categoría
-    # Por ahora devuelvo todos los platos del menú
-    query = select(Dish).where(Dish.menu_id == menu_id)
+    # Filtrar por categoría usando join
+    query = (
+        select(Dish)
+        .join(DishCategory)
+        .where(Dish.menu_id == menu_id)
+        .where(DishCategory.category_id == category_id)
+    )
     result = await db.execute(query)
     return list(result.scalars().all())
 
