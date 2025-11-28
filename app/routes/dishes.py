@@ -1,8 +1,6 @@
-from fastapi import APIRouter, Depends, Path, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Path, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy import func
-from typing import List, Optional
+from typing import List
 
 from app.database import get_db
 from app.schemas.dishes import DishCreate, DishOut, DishUpdate
@@ -19,8 +17,7 @@ from app.controllers.dishes import (
     get_allergens_by_dish,
     add_allergen_to_dish,
     remove_allergen_from_dish
-)
-from app.models.dishes import Dish 
+) 
 
 router = APIRouter(prefix="/platos", tags=["Platos"])
 
@@ -66,8 +63,6 @@ async def delete_plato(
 ):
     """Eliminar un plato"""
     return await delete_dish(db, plato_id)
-
-# Endpoints adicionales siguiendo el estilo del profesor
 
 # Listar platos por menú → GET
 @router.get("/menu/{menu_id}", response_model=List[DishOut])
@@ -128,13 +123,5 @@ async def search_platos_by_name(
     db: AsyncSession = Depends(get_db),
 ):
     """Buscar platos por nombre"""
-    try:
-        query = select(Dish).where(func.lower(Dish.name).contains(func.lower(name)))
-        result = await db.execute(query)
-        dishes = result.scalars().all()
-        return dishes
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error en la búsqueda: {str(e)}"
-        )
+    from app.controllers.dishes import search_dishes_by_name
+    return await search_dishes_by_name(db, name)

@@ -313,3 +313,19 @@ async def remove_allergen_from_dish(db: AsyncSession, dish_id: int, allergen_id:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al eliminar asociación: {str(e)}"
         )
+
+
+# Buscar platos por nombre
+async def search_dishes_by_name(db: AsyncSession, name: str):
+    """Buscar platos por nombre (búsqueda parcial)"""
+    try:
+        from sqlalchemy import func
+        query = select(Dish).where(func.lower(Dish.name).contains(func.lower(name)))
+        result = await db.execute(query)
+        dishes = result.scalars().all()
+        return dishes
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error en la búsqueda: {str(e)}"
+        )

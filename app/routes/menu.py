@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path, HTTPException
+from fastapi import APIRouter, Depends, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from app.database import get_db
@@ -77,7 +77,5 @@ async def delete_menu_item(
     db: AsyncSession = Depends(get_db)
 ):
     """Eliminar un menú"""
-    deleted = await delete_menu_controller(db, menu_id)
-    if deleted:
-        return {"message": f"Menú {menu_id} eliminado exitosamente"}
-    raise HTTPException(status_code=404, detail="Menu not found")
+    await delete_menu_controller(db, menu_id)
+    return {"message": f"Menú {menu_id} eliminado exitosamente"}

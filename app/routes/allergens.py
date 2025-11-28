@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path, HTTPException
+from fastapi import APIRouter, Depends, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from app.database import get_db
@@ -28,10 +28,7 @@ async def get_allergen(
     db: AsyncSession = Depends(get_db)
 ):
     """Obtener un alérgeno específico por su ID"""
-    allergen = await get_allergen_by_id(db, allergen_id)
-    if not allergen:
-        raise HTTPException(status_code=404, detail="Allergen not found")
-    return allergen
+    return await get_allergen_by_id(db, allergen_id)
 
 @router.get("/dish/{dish_id}", response_model=List[AllergenOut], summary="Obtener alérgenos de un plato")
 async def get_dish_allergen(
@@ -56,10 +53,7 @@ async def update_allergen_route(
     db: AsyncSession = Depends(get_db)
 ):
     """Actualizar un alérgeno existente"""
-    updated = await update_allergen(db, allergen_id, allergen)
-    if not updated:
-        raise HTTPException(status_code=404, detail="Allergen not found")
-    return updated
+    return await update_allergen(db, allergen_id, allergen)
 
 @router.delete("/{allergen_id}", response_model=AllergenMessageOut, summary="Eliminar alérgeno")
 async def delete_allergen_route(
@@ -67,9 +61,7 @@ async def delete_allergen_route(
     db: AsyncSession = Depends(get_db)
 ):
     """Eliminar un alérgeno"""
-    deleted = await delete_allergen(db, allergen_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Allergen not found")
+    await delete_allergen(db, allergen_id)
     return {"message": f"Alérgeno con ID {allergen_id} eliminado"}
 
 
@@ -91,7 +83,5 @@ async def remove_user_allergen(
     db: AsyncSession = Depends(get_db)
 ):
     """Eliminar la asociación de un alérgeno con un usuario"""
-    deleted = await remove_allergen_from_user(db, user_id, allergen_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Association not found")
+    await remove_allergen_from_user(db, user_id, allergen_id)
     return {"message": "Alérgeno desasociado del usuario"}

@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from fastapi import HTTPException
 from app.models.allergens import Allergens
 from app.models.user_allergen import UserAllergen
 from app.models.dish_allergen import DishAllergen
@@ -26,7 +27,10 @@ async def get_allergen_by_id(db: AsyncSession, allergen_id: int):
     result = await db.execute(
         select(Allergens).where(Allergens.allergen_id == allergen_id)
     )
-    return result.scalar_one_or_none()
+    allergen = result.scalar_one_or_none()
+    if not allergen:
+        raise HTTPException(status_code=404, detail="Allergen not found")
+    return allergen
 
 
 async def get_allergens_by_dish(db: AsyncSession, dish_id: int):
@@ -65,11 +69,12 @@ async def remove_allergen_from_user(db: AsyncSession, user_id: int, allergen_id:
         .where(UserAllergen.allergen_id == allergen_id)
     )
     user_allergen = result.scalar_one_or_none()
-    if user_allergen:
-        await db.delete(user_allergen)
-        await db.commit()
-        return True
-    return False
+    if not user_allergen:
+        raise HTTPException(status_code=404, detail="Association not found")
+    
+    await db.delete(user_allergen)
+    await db.commit()
+    return True
 
 
 async def update_allergen(db: AsyncSession, allergen_id: int, data: AllergenUpdate):
@@ -79,7 +84,7 @@ async def update_allergen(db: AsyncSession, allergen_id: int, data: AllergenUpda
     )
     allergen = result.scalar_one_or_none()
     if not allergen:
-        return None
+        raise HTTPException(status_code=404, detail="Allergen not found")
     
     update_data = data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
@@ -96,8 +101,9 @@ async def delete_allergen(db: AsyncSession, allergen_id: int):
         select(Allergens).where(Allergens.allergen_id == allergen_id)
     )
     allergen = result.scalar_one_or_none()
-    if allergen:
-        await db.delete(allergen)
-        await db.commit()
-        return True
-    return False
+    if not allergen:
+        raise HTTPException(status_code=404, detail="Allergen not found")
+    
+    await db.delete(allergen)
+    await db.commit()
+    return True
